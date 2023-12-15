@@ -15,6 +15,10 @@
   * square matrices: [`DMat2`], [`DMat3`] and [`DMat4`]
   * a quaternion type: [`DQuat`]
   * affine transformation types: [`DAffine2`] and [`DAffine3`]
+* [`i16`](mod@i16) types
+  * vectors: [`I16Vec2`], [`I16Vec3`] and [`I16Vec4`]
+* [`u16`](mod@u16) types
+  * vectors: [`U16Vec2`], [`U16Vec3`] and [`U16Vec4`]
 * [`i32`](mod@i32) types
   * vectors: [`IVec2`], [`IVec3`] and [`IVec4`]
 * [`u32`](mod@u32) types
@@ -247,7 +251,7 @@ and benchmarks.
 The minimum supported Rust version is `1.58.1`.
 
 */
-#![doc(html_root_url = "https://docs.rs/glam/0.24.1")]
+#![doc(html_root_url = "https://docs.rs/glam/0.24.2")]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(target_arch = "spirv", feature(repr_simd))]
 #![deny(
@@ -307,6 +311,14 @@ pub use self::f32::*;
 pub mod f64;
 pub use self::f64::*;
 
+/** `i16` vector types. */
+pub mod i16;
+pub use self::i16::*;
+
+/** `u16` vector types. */
+pub mod u16;
+pub use self::u16::*;
+
 /** `i32` vector types. */
 pub mod i32;
 pub use self::i32::*;
@@ -329,3 +341,7 @@ pub use self::swizzles::{Vec2Swizzles, Vec3Swizzles, Vec4Swizzles};
 
 /** Rotation Helper */
 pub use euler::EulerRot;
+
+/** A trait for extending [`prim@f32`] and [`prim@f64`] with extra methods. */
+mod float;
+pub use float::FloatExt;

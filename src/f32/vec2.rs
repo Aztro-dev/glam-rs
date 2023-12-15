@@ -83,8 +83,8 @@ impl Vec2 {
     #[inline]
     pub fn select(mask: BVec2, if_true: Self, if_false: Self) -> Self {
         Self {
-            x: if mask.x { if_true.x } else { if_false.x },
-            y: if mask.y { if_true.y } else { if_false.y },
+            x: if mask.test(0) { if_true.x } else { if_false.x },
+            y: if mask.test(1) { if_true.y } else { if_false.y },
         }
     }
 
@@ -648,6 +648,14 @@ impl Vec2 {
         Self { x: cos, y: sin }
     }
 
+    /// Returns the angle (in radians) of this vector in the range `[-π, +π]`.
+    ///
+    /// The input does not need to be a unit vector however it must be non-zero.
+    #[inline]
+    pub fn to_angle(self) -> f32 {
+        math::atan2(self.y, self.x)
+    }
+
     /// Returns the angle (in radians) between `self` and `rhs` in the range `[-π, +π]`.
     ///
     /// The inputs do not need to be unit vectors however they must be non-zero.
@@ -695,6 +703,18 @@ impl Vec2 {
     #[inline]
     pub fn as_dvec2(&self) -> crate::DVec2 {
         crate::DVec2::new(self.x as f64, self.y as f64)
+    }
+
+    /// Casts all elements of `self` to `i16`.
+    #[inline]
+    pub fn as_i16vec2(&self) -> crate::I16Vec2 {
+        crate::I16Vec2::new(self.x as i16, self.y as i16)
+    }
+
+    /// Casts all elements of `self` to `u16`.
+    #[inline]
+    pub fn as_u16vec2(&self) -> crate::U16Vec2 {
+        crate::U16Vec2::new(self.x as u16, self.y as u16)
     }
 
     /// Casts all elements of `self` to `i32`.

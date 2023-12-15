@@ -5,6 +5,54 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog], and this project adheres to
 [Semantic Versioning].
 
+## [Unreleased]
+
+### Breaking changes
+
+* Changed `Vec4` to always used `BVec4A` as a mask type, regardless if the
+  target architecture has SIMD support in glam. Previously this was inconsistent
+  on different hardware like ARM. This will have a slight performance cost when
+  SIMD is not available. `Vec4` will continue to use `BVec4` as a mask type when
+  the `scalar-math` feature is used.
+
+### Fixed
+
+* Made `Affine2` implement the `bytemuck::AnyBitPattern` trait instead of
+  `bytemuck::Pod` as it contains internal padding due to `Mat2` being 16 byte
+  aligned.
+
+* Updated the `core-simd` implementation to build on latest nightly.
+
+### Added
+
+* Added `to_angle` method to 2D vectors.
+
+* Added `FloatExt` trait which adds `lerp`, `inverse_lerp` and `remap` methods
+  to `f32` and `f64` types.
+
+* Added `i16` and `u16` vector types, `I16Vec2`, `I16Vec3`, `I16Vec4`,
+  `U16Vec2`, `U16Vec3` and `U16Vec4`.
+
+## [0.24.2] - 2023-09-23
+
+### Fixed
+
+* Fixed singularities in `Quat::to_euler`.
+
+### Added
+
+* Added `div_euclid` and `rem_euclid` to integer vector types.
+
+* Added wrapping and saturating arithmetic operations to integer vector types.
+
+* Added `to_scale_angle_translation` to 2D affine types.
+
+* Added `mul_assign` ops to affine types.
+
+### Changed
+
+* Disable default features on optional `rkyv` dependency.
+
 ## [0.24.1] - 2023-06-24
 
 ### Added
@@ -14,7 +62,7 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 * Added missing safe `From` conversions from `f32` vectors to `f64` vectors.
 
-* Added `TryFrom` implemetations between different vector types.
+* Added `TryFrom` implementations between different vector types.
 
 * Added `test` and `set` methods to `bool` vector types for testing and setting
   individual mask elements.
@@ -26,7 +74,7 @@ The format is based on [Keep a Changelog], and this project adheres to
 ### Breaking changes
 
 * Enabling `libm` in a `std` build now overrides the `std` math functions. This
-  is unlikely to break anything but it is a change in behaviour.
+  is unlikely to break anything but it is a change in behavior.
 
 ### Added
 
@@ -415,7 +463,7 @@ The format is based on [Keep a Changelog], and this project adheres to
 * Removed deprecated `zero()`, `one()`, `unit_x()`, `unit_y()`, `unit_z()`,
   `unit_w()`, `identity()` and `Mat2::scale()` methods.
 * Remove problematic `Quat` `From` trait conversions which would allow creating
-  a non-uniform quaternion without necessarily realising, including from
+  a non-uniform quaternion without necessarily realizing, including from
   `Vec4`, `(x, y, z, w)` and `[f32; 4]`.
 
 ### Added
@@ -944,7 +992,8 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 [Keep a Changelog]: https://keepachangelog.com/
 [Semantic Versioning]: https://semver.org/spec/v2.0.0.html
-[Unreleased]: https://github.com/bitshifter/glam-rs/compare/0.24.1...HEAD
+[Unreleased]: https://github.com/bitshifter/glam-rs/compare/0.24.2...HEAD
+[0.24.2]: https://github.com/bitshifter/glam-rs/compare/0.24.1...0.24.2
 [0.24.1]: https://github.com/bitshifter/glam-rs/compare/0.24.0...0.24.1
 [0.24.0]: https://github.com/bitshifter/glam-rs/compare/0.23.0...0.24.0
 [0.23.0]: https://github.com/bitshifter/glam-rs/compare/0.22.0...0.23.0

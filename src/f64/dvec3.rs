@@ -89,9 +89,9 @@ impl DVec3 {
     #[inline]
     pub fn select(mask: BVec3, if_true: Self, if_false: Self) -> Self {
         Self {
-            x: if mask.x { if_true.x } else { if_false.x },
-            y: if mask.y { if_true.y } else { if_false.y },
-            z: if mask.z { if_true.z } else { if_false.z },
+            x: if mask.test(0) { if_true.x } else { if_false.x },
+            y: if mask.test(1) { if_true.y } else { if_false.y },
+            z: if mask.test(2) { if_true.z } else { if_false.z },
         }
     }
 
@@ -768,6 +768,18 @@ impl DVec3 {
     #[inline]
     pub fn as_vec3a(&self) -> crate::Vec3A {
         crate::Vec3A::new(self.x as f32, self.y as f32, self.z as f32)
+    }
+
+    /// Casts all elements of `self` to `i16`.
+    #[inline]
+    pub fn as_i16vec3(&self) -> crate::I16Vec3 {
+        crate::I16Vec3::new(self.x as i16, self.y as i16, self.z as i16)
+    }
+
+    /// Casts all elements of `self` to `u16`.
+    #[inline]
+    pub fn as_u16vec3(&self) -> crate::U16Vec3 {
+        crate::U16Vec3::new(self.x as u16, self.y as u16, self.z as u16)
     }
 
     /// Casts all elements of `self` to `i32`.

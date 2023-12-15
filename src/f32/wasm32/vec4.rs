@@ -139,7 +139,7 @@ impl Vec4 {
         slice[3] = self.w;
     }
 
-    /// Creates a 2D vector from the `x`, `y` and `z` elements of `self`, discarding `w`.
+    /// Creates a 3D vector from the `x`, `y` and `z` elements of `self`, discarding `w`.
     ///
     /// Truncation to [`Vec3`] may also be performed by using [`self.xyz()`][crate::swizzles::Vec4Swizzles::xyz()].
     ///
@@ -159,7 +159,7 @@ impl Vec4 {
     /// Returns a vector where every component is the dot product of `self` and `rhs`.
     #[inline]
     pub fn dot_into_vec(self, rhs: Self) -> Self {
-        Self(unsafe { dot4_into_v128(self.0, rhs.0) })
+        Self(dot4_into_v128(self.0, rhs.0))
     }
 
     /// Returns a vector containing the minimum values for each element of `self` and `rhs`.
@@ -670,6 +670,18 @@ impl Vec4 {
     #[inline]
     pub fn as_dvec4(&self) -> crate::DVec4 {
         crate::DVec4::new(self.x as f64, self.y as f64, self.z as f64, self.w as f64)
+    }
+
+    /// Casts all elements of `self` to `i16`.
+    #[inline]
+    pub fn as_i16vec4(&self) -> crate::I16Vec4 {
+        crate::I16Vec4::new(self.x as i16, self.y as i16, self.z as i16, self.w as i16)
+    }
+
+    /// Casts all elements of `self` to `u16`.
+    #[inline]
+    pub fn as_u16vec4(&self) -> crate::U16Vec4 {
+        crate::U16Vec4::new(self.x as u16, self.y as u16, self.z as u16, self.w as u16)
     }
 
     /// Casts all elements of `self` to `i32`.

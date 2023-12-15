@@ -2,7 +2,7 @@
 
 // Generated from {{template_path}} template. Edit the template, not the generated file.
 
-{% if is_scalar %}
+{% if is_scalar and not is_align %}
     {% set mask_t = "BVec" ~ dim %}
 {% else %}
     {% set is_simd = true %}
@@ -12,6 +12,8 @@
         {% set simd_t = "v128" %}
     {% elif is_coresimd %}
         {% set simd_t = "f32x4" %}
+    {% else %}
+        {% set is_simd = false %}
     {% endif %}
     {% set mask_t = "BVec" ~ dim ~ "A" %}
 {% endif %}
@@ -20,7 +22,7 @@
     {% set is_signed = true %}
     {% set is_float = true %}
     {% if scalar_t == "f32" %}
-        {% if dim == 3 and is_simd or is_align %}
+        {% if dim == 3 and is_align %}
             {% set self_t = "Vec3A" %}
             {% set mask_t = "BVec3A" %}
         {% else %}
@@ -37,6 +39,22 @@
         {% set vec4_t = "DVec4" %}
         {% set from_types = ["Vec" ~ dim, "IVec" ~ dim, "UVec" ~ dim] %}
     {% endif %}
+{% elif scalar_t == "i16" %}
+    {% set is_signed = true %}
+    {% set is_float = false %}
+    {% set self_t = "I16Vec" ~ dim %}
+    {% set vec2_t = "I16Vec2" %}
+    {% set vec3_t = "I16Vec3" %}
+    {% set vec4_t = "I16Vec4" %}
+    {% set try_from_types = ["U16Vec" ~ dim, "IVec" ~ dim, "UVec" ~ dim, "I64Vec" ~ dim, "U64Vec" ~ dim] %}
+{% elif scalar_t == "u16" %}
+    {% set is_signed = false %}
+    {% set is_float = false %}
+    {% set self_t = "U16Vec" ~ dim %}
+    {% set vec2_t = "U16Vec2" %}
+    {% set vec3_t = "U16Vec3" %}
+    {% set vec4_t = "U16Vec4" %}
+    {% set try_from_types = ["I16Vec" ~ dim, "IVec" ~ dim, "UVec" ~ dim, "I64Vec" ~ dim, "U64Vec" ~ dim] %}
 {% elif scalar_t == "i32" %}
     {% set is_signed = true %}
     {% set is_float = false %}
@@ -44,7 +62,8 @@
     {% set vec2_t = "IVec2" %}
     {% set vec3_t = "IVec3" %}
     {% set vec4_t = "IVec4" %}
-    {% set try_from_types = ["UVec" ~ dim, "U64Vec" ~ dim, "I64Vec" ~ dim] %}
+    {% set from_types = ["I16Vec" ~ dim, "U16Vec" ~ dim] %}
+    {% set try_from_types = ["UVec" ~ dim, "I64Vec" ~ dim, "U64Vec" ~ dim] %}
 {% elif scalar_t == "u32" %}
     {% set is_signed = false %}
     {% set is_float = false %}
@@ -52,7 +71,8 @@
     {% set vec2_t = "UVec2" %}
     {% set vec3_t = "UVec3" %}
     {% set vec4_t = "UVec4" %}
-    {% set try_from_types = ["IVec" ~ dim, "I64Vec" ~ dim, "U64Vec" ~ dim] %}
+    {% set from_types = ["U16Vec" ~ dim] %}
+    {% set try_from_types = ["I16Vec" ~ dim, "IVec" ~ dim, "I64Vec" ~ dim, "U64Vec" ~ dim] %}
 {% elif scalar_t == "i64" %}
     {% set is_signed = true %}
     {% set is_float = false %}
@@ -60,7 +80,7 @@
     {% set vec2_t = "I64Vec2" %}
     {% set vec3_t = "I64Vec3" %}
     {% set vec4_t = "I64Vec4" %}
-    {% set from_types = ["IVec" ~ dim] %}
+    {% set from_types = ["I16Vec" ~ dim, "U16Vec" ~ dim, "IVec" ~ dim, "UVec" ~ dim] %}
     {% set try_from_types = ["U64Vec" ~ dim] %}
 {% elif scalar_t == "u64" %}
     {% set is_signed = false %}
@@ -69,14 +89,26 @@
     {% set vec2_t = "U64Vec2" %}
     {% set vec3_t = "U64Vec3" %}
     {% set vec4_t = "U64Vec4" %}
-    {% set from_types = ["UVec" ~ dim] %}
-    {% set try_from_types = ["I64Vec" ~ dim] %}
+    {% set from_types = ["U16Vec" ~ dim, "UVec" ~ dim] %}
+    {% set try_from_types = ["I16Vec" ~ dim, "IVec" ~ dim, "I64Vec" ~ dim] %}
 {% endif %}
 
-{% if scalar_t == "f64" or scalar_t == "i64" or scalar_t == "u64" or dim == 4 %}
-    {% set cuda_align = 16 %}
-{% elif dim == 2 %}
-    {% set cuda_align = 8 %}
+{% if dim == 2 %}
+    {% if scalar_t == "i16" or scalar_t == "u16" %}
+        {% set cuda_align = 4 %}
+    {% elif scalar_t == "f32" or scalar_t == "i32" or scalar_t == "u32" %}
+        {% set cuda_align = 8 %}
+    {% elif scalar_t == "f64" or scalar_t == "i64" or scalar_t == "u64" %}
+        {% set cuda_align = 16 %}
+    {% endif %}
+{% elif dim == 4 %}
+    {% if scalar_t == "i16" or scalar_t == "u16" %}
+        {% set cuda_align = 8 %}
+    {% elif scalar_t == "f32" or scalar_t == "i32" or scalar_t == "u32" %}
+        {% set cuda_align = 16 %}
+    {% elif scalar_t == "f64" or scalar_t == "i64" or scalar_t == "u64" %}
+        {% set cuda_align = 16 %}
+    {% endif %}
 {% endif %}
 
 {% set components = ["x", "y", "z", "w"] | slice(end = dim) %}
@@ -90,8 +122,16 @@
     {% set zero = "0" %}
 {% endif %}
 
-use crate::{
-    {{ mask_t }},
+{% if mask_t == "BVec4A" and scalar_t == "f32"  and is_scalar %}
+    #[cfg(feature = "scalar-math")]
+    use crate::BVec4 as BVec4A;
+    #[cfg(not(feature = "scalar-math"))]
+    use crate::BVec4A;
+    use crate::{
+{% else %}
+    use crate::{
+        {{ mask_t }},
+{% endif %}
     {% if self_t != vec2_t %}
         {{ vec2_t }},
     {% endif %}
@@ -139,7 +179,7 @@ use core::arch::x86_64::*;
 {% elif is_wasm32 %}
 use core::arch::wasm32::*;
 {% elif is_coresimd %}
-use core::simd::*;
+use core::simd::{cmp::SimdPartialEq, cmp::SimdPartialOrd, num::SimdFloat, *};
 use std::simd::StdFloat;
 {% endif %}
 
@@ -343,11 +383,7 @@ impl {{ self_t }} {
         {% if is_scalar %}
             Self {
                 {% for c in components %}
-                    {%- if is_align %}
-                        {{ c  }}: if mask.{{ c }} != 0 { if_true.{{ c }} } else { if_false.{{ c }} },
-                    {%- else %}
-                        {{ c  }}: if mask.{{ c }} { if_true.{{ c }} } else { if_false.{{ c }} },
-                    {%- endif %}
+                    {{ c  }}: if mask.test({{ loop.index0 }}) { if_true.{{ c }} } else { if_false.{{ c }} },
                 {%- endfor %}
             }
         {% elif is_sse2 %}
@@ -449,7 +485,7 @@ impl {{ self_t }} {
         self.xy()
     }
 {% elif dim == 4 %}
-    /// Creates a 2D vector from the `x`, `y` and `z` elements of `self`, discarding `w`.
+    /// Creates a 3D vector from the `x`, `y` and `z` elements of `self`, discarding `w`.
     ///
     /// Truncation to [`{{ vec3_t }}`] may also be performed by using [`self.xyz()`][crate::swizzles::Vec4Swizzles::xyz()].
 {%- if scalar_t == "f32" %}
@@ -483,7 +519,7 @@ impl {{ self_t }} {
         {% if is_sse2 %}
             Self(unsafe { dot{{ dim }}_into_m128(self.0, rhs.0) })
         {% elif is_wasm32 %}
-            Self(unsafe { dot{{ dim }}_into_v128(self.0, rhs.0) })
+            Self(dot{{ dim }}_into_v128(self.0, rhs.0))
         {% elif is_coresimd %}
             Self(dot{{ dim }}_into_f32x4(self.0, rhs.0))
         {% else %}
@@ -1487,6 +1523,14 @@ impl {{ self_t }} {
         }
     }
 
+    /// Returns the angle (in radians) of this vector in the range `[-π, +π]`.
+    ///
+    /// The input does not need to be a unit vector however it must be non-zero.
+    #[inline]
+    pub fn to_angle(self) -> {{ scalar_t }} {
+        math::atan2(self.y, self.x)
+    }
+
     /// Returns the angle (in radians) between `self` and `rhs` in the range `[-π, +π]`.
     ///
     /// The inputs do not need to be unit vectors however they must be non-zero.
@@ -1643,6 +1687,48 @@ impl {{ self_t }} {
     }
     {% endif %}
 {% endif %}
+{% if scalar_t != "i16" %}
+    {% if dim == 2 %}
+    /// Casts all elements of `self` to `i16`.
+    #[inline]
+    pub fn as_i16vec2(&self) -> crate::I16Vec2 {
+        crate::I16Vec2::new(self.x as i16, self.y as i16)
+    }
+    {% elif dim == 3 %}
+    /// Casts all elements of `self` to `i16`.
+    #[inline]
+    pub fn as_i16vec3(&self) -> crate::I16Vec3 {
+        crate::I16Vec3::new(self.x as i16, self.y as i16, self.z as i16)
+    }
+    {% elif dim == 4 %}
+    /// Casts all elements of `self` to `i16`.
+    #[inline]
+    pub fn as_i16vec4(&self) -> crate::I16Vec4 {
+        crate::I16Vec4::new(self.x as i16, self.y as i16, self.z as i16, self.w as i16)
+    }
+    {% endif %}
+{% endif %}
+{% if scalar_t != "u16" %}
+    {% if dim == 2 %}
+    /// Casts all elements of `self` to `u16`.
+    #[inline]
+    pub fn as_u16vec2(&self) -> crate::U16Vec2 {
+        crate::U16Vec2::new(self.x as u16, self.y as u16)
+    }
+    {% elif dim == 3 %}
+    /// Casts all elements of `self` to `u16`.
+    #[inline]
+    pub fn as_u16vec3(&self) -> crate::U16Vec3 {
+        crate::U16Vec3::new(self.x as u16, self.y as u16, self.z as u16)
+    }
+    {% elif dim == 4 %}
+    /// Casts all elements of `self` to `u16`.
+    #[inline]
+    pub fn as_u16vec4(&self) -> crate::U16Vec4 {
+        crate::U16Vec4::new(self.x as u16, self.y as u16, self.z as u16, self.w as u16)
+    }
+    {% endif %}
+{% endif %}
 {% if scalar_t != "i32" %}
     {% if dim == 2 %}
     /// Casts all elements of `self` to `i32`.
@@ -1726,6 +1812,112 @@ impl {{ self_t }} {
         crate::U64Vec4::new(self.x as u64, self.y as u64, self.z as u64, self.w as u64)
     }
     {% endif %}
+{% endif %}
+
+{% if not is_float %}
+    /// Returns a vector containing the wrapping addition of `self` and `rhs`.
+    ///
+    /// In other words this computes `[self.x.wrapping_add(rhs.x), self.y.wrapping_add(rhs.y), ..]`.
+    #[inline]
+    #[must_use]
+    pub const fn wrapping_add(self, rhs: Self) -> Self {
+        Self {
+            {% for c in components %}
+                {{ c }}: self.{{ c }}.wrapping_add(rhs.{{ c }}),
+            {%- endfor %}
+        }
+    }
+
+    /// Returns a vector containing the wrapping subtraction of `self` and `rhs`.
+    ///
+    /// In other words this computes `[self.x.wrapping_sub(rhs.x), self.y.wrapping_sub(rhs.y), ..]`.
+    #[inline]
+    #[must_use]
+    pub const fn wrapping_sub(self, rhs: Self) -> Self {
+        Self {
+            {% for c in components %}
+                {{ c }}: self.{{ c }}.wrapping_sub(rhs.{{ c }}),
+            {%- endfor %}
+        }
+    }
+
+    /// Returns a vector containing the wrapping multiplication of `self` and `rhs`.
+    ///
+    /// In other words this computes `[self.x.wrapping_mul(rhs.x), self.y.wrapping_mul(rhs.y), ..]`.
+    #[inline]
+    #[must_use]
+    pub const fn wrapping_mul(self, rhs: Self) -> Self {
+        Self {
+            {% for c in components %}
+                {{ c }}: self.{{ c }}.wrapping_mul(rhs.{{ c }}),
+            {%- endfor %}
+        }
+    }
+
+    /// Returns a vector containing the wrapping division of `self` and `rhs`.
+    ///
+    /// In other words this computes `[self.x.wrapping_div(rhs.x), self.y.wrapping_div(rhs.y), ..]`.
+    #[inline]
+    #[must_use]
+    pub const fn wrapping_div(self, rhs: Self) -> Self {
+        Self {
+            {% for c in components %}
+                {{ c }}: self.{{ c }}.wrapping_div(rhs.{{ c }}),
+            {%- endfor %}
+        }
+    }
+
+    /// Returns a vector containing the saturating addition of `self` and `rhs`.
+    ///
+    /// In other words this computes `[self.x.saturating_add(rhs.x), self.y.saturating_add(rhs.y), ..]`.
+    #[inline]
+    #[must_use]
+    pub const fn saturating_add(self, rhs: Self) -> Self {
+        Self {
+            {% for c in components %}
+                {{ c }}: self.{{ c }}.saturating_add(rhs.{{ c }}),
+            {%- endfor %}
+        }
+    }
+
+    /// Returns a vector containing the saturating subtraction of `self` and `rhs`.
+    ///
+    /// In other words this computes `[self.x.saturating_sub(rhs.x), self.y.saturating_sub(rhs.y), ..]`.
+    #[inline]
+    #[must_use]
+    pub const fn saturating_sub(self, rhs: Self) -> Self {
+        Self {
+            {% for c in components %}
+                {{ c }}: self.{{ c }}.saturating_sub(rhs.{{ c }}),
+            {%- endfor %}
+        }
+    }
+
+    /// Returns a vector containing the saturating multiplication of `self` and `rhs`.
+    ///
+    /// In other words this computes `[self.x.saturating_mul(rhs.x), self.y.saturating_mul(rhs.y), ..]`.
+    #[inline]
+    #[must_use]
+    pub const fn saturating_mul(self, rhs: Self) -> Self {
+        Self {
+            {% for c in components %}
+                {{ c }}: self.{{ c }}.saturating_mul(rhs.{{ c }}),
+            {%- endfor %}
+        }
+    }
+
+    /// Returns a vector containing the saturating division of `self` and `rhs`.
+    ///
+    /// In other words this computes `[self.x.saturating_div(rhs.x), self.y.saturating_div(rhs.y), ..]`.
+    #[inline]
+    #[must_use]
+    pub const fn saturating_div(self, rhs: Self) -> Self {
+        Self {
+            {% for c in components %}
+                {{ c }}: self.{{ c }}.saturating_div(rhs.{{ c }}),
+            {%- endfor %}
+        }
+    }
 {% endif %}
 }
 

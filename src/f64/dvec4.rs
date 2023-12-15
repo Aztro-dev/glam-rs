@@ -105,10 +105,10 @@ impl DVec4 {
     #[inline]
     pub fn select(mask: BVec4, if_true: Self, if_false: Self) -> Self {
         Self {
-            x: if mask.x { if_true.x } else { if_false.x },
-            y: if mask.y { if_true.y } else { if_false.y },
-            z: if mask.z { if_true.z } else { if_false.z },
-            w: if mask.w { if_true.w } else { if_false.w },
+            x: if mask.test(0) { if_true.x } else { if_false.x },
+            y: if mask.test(1) { if_true.y } else { if_false.y },
+            z: if mask.test(2) { if_true.z } else { if_false.z },
+            w: if mask.test(3) { if_true.w } else { if_false.w },
         }
     }
 
@@ -147,7 +147,7 @@ impl DVec4 {
         slice[3] = self.w;
     }
 
-    /// Creates a 2D vector from the `x`, `y` and `z` elements of `self`, discarding `w`.
+    /// Creates a 3D vector from the `x`, `y` and `z` elements of `self`, discarding `w`.
     ///
     /// Truncation to [`DVec3`] may also be performed by using [`self.xyz()`][crate::swizzles::Vec4Swizzles::xyz()].
     #[inline]
@@ -745,6 +745,18 @@ impl DVec4 {
     #[inline]
     pub fn as_vec4(&self) -> crate::Vec4 {
         crate::Vec4::new(self.x as f32, self.y as f32, self.z as f32, self.w as f32)
+    }
+
+    /// Casts all elements of `self` to `i16`.
+    #[inline]
+    pub fn as_i16vec4(&self) -> crate::I16Vec4 {
+        crate::I16Vec4::new(self.x as i16, self.y as i16, self.z as i16, self.w as i16)
+    }
+
+    /// Casts all elements of `self` to `u16`.
+    #[inline]
+    pub fn as_u16vec4(&self) -> crate::U16Vec4 {
+        crate::U16Vec4::new(self.x as u16, self.y as u16, self.z as u16, self.w as u16)
     }
 
     /// Casts all elements of `self` to `i32`.

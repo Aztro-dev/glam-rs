@@ -1,6 +1,10 @@
 // Generated from vec.rs.tera template. Edit the template, not the generated file.
 
-use crate::{f32::math, BVec4, Vec2, Vec3, Vec3A};
+#[cfg(feature = "scalar-math")]
+use crate::BVec4 as BVec4A;
+#[cfg(not(feature = "scalar-math"))]
+use crate::BVec4A;
+use crate::{f32::math, Vec2, Vec3, Vec3A};
 
 #[cfg(not(target_arch = "spirv"))]
 use core::fmt;
@@ -109,12 +113,12 @@ impl Vec4 {
     /// A true element in the mask uses the corresponding element from `if_true`, and false
     /// uses the element from `if_false`.
     #[inline]
-    pub fn select(mask: BVec4, if_true: Self, if_false: Self) -> Self {
+    pub fn select(mask: BVec4A, if_true: Self, if_false: Self) -> Self {
         Self {
-            x: if mask.x { if_true.x } else { if_false.x },
-            y: if mask.y { if_true.y } else { if_false.y },
-            z: if mask.z { if_true.z } else { if_false.z },
-            w: if mask.w { if_true.w } else { if_false.w },
+            x: if mask.test(0) { if_true.x } else { if_false.x },
+            y: if mask.test(1) { if_true.y } else { if_false.y },
+            z: if mask.test(2) { if_true.z } else { if_false.z },
+            w: if mask.test(3) { if_true.w } else { if_false.w },
         }
     }
 
@@ -153,7 +157,7 @@ impl Vec4 {
         slice[3] = self.w;
     }
 
-    /// Creates a 2D vector from the `x`, `y` and `z` elements of `self`, discarding `w`.
+    /// Creates a 3D vector from the `x`, `y` and `z` elements of `self`, discarding `w`.
     ///
     /// Truncation to [`Vec3`] may also be performed by using [`self.xyz()`][crate::swizzles::Vec4Swizzles::xyz()].
     ///
@@ -237,8 +241,8 @@ impl Vec4 {
     /// In other words, this computes `[self.x == rhs.x, self.y == rhs.y, ..]` for all
     /// elements.
     #[inline]
-    pub fn cmpeq(self, rhs: Self) -> BVec4 {
-        BVec4::new(
+    pub fn cmpeq(self, rhs: Self) -> BVec4A {
+        BVec4A::new(
             self.x.eq(&rhs.x),
             self.y.eq(&rhs.y),
             self.z.eq(&rhs.z),
@@ -252,8 +256,8 @@ impl Vec4 {
     /// In other words this computes `[self.x != rhs.x, self.y != rhs.y, ..]` for all
     /// elements.
     #[inline]
-    pub fn cmpne(self, rhs: Self) -> BVec4 {
-        BVec4::new(
+    pub fn cmpne(self, rhs: Self) -> BVec4A {
+        BVec4A::new(
             self.x.ne(&rhs.x),
             self.y.ne(&rhs.y),
             self.z.ne(&rhs.z),
@@ -267,8 +271,8 @@ impl Vec4 {
     /// In other words this computes `[self.x >= rhs.x, self.y >= rhs.y, ..]` for all
     /// elements.
     #[inline]
-    pub fn cmpge(self, rhs: Self) -> BVec4 {
-        BVec4::new(
+    pub fn cmpge(self, rhs: Self) -> BVec4A {
+        BVec4A::new(
             self.x.ge(&rhs.x),
             self.y.ge(&rhs.y),
             self.z.ge(&rhs.z),
@@ -282,8 +286,8 @@ impl Vec4 {
     /// In other words this computes `[self.x > rhs.x, self.y > rhs.y, ..]` for all
     /// elements.
     #[inline]
-    pub fn cmpgt(self, rhs: Self) -> BVec4 {
-        BVec4::new(
+    pub fn cmpgt(self, rhs: Self) -> BVec4A {
+        BVec4A::new(
             self.x.gt(&rhs.x),
             self.y.gt(&rhs.y),
             self.z.gt(&rhs.z),
@@ -297,8 +301,8 @@ impl Vec4 {
     /// In other words this computes `[self.x <= rhs.x, self.y <= rhs.y, ..]` for all
     /// elements.
     #[inline]
-    pub fn cmple(self, rhs: Self) -> BVec4 {
-        BVec4::new(
+    pub fn cmple(self, rhs: Self) -> BVec4A {
+        BVec4A::new(
             self.x.le(&rhs.x),
             self.y.le(&rhs.y),
             self.z.le(&rhs.z),
@@ -312,8 +316,8 @@ impl Vec4 {
     /// In other words this computes `[self.x < rhs.x, self.y < rhs.y, ..]` for all
     /// elements.
     #[inline]
-    pub fn cmplt(self, rhs: Self) -> BVec4 {
-        BVec4::new(
+    pub fn cmplt(self, rhs: Self) -> BVec4A {
+        BVec4A::new(
             self.x.lt(&rhs.x),
             self.y.lt(&rhs.y),
             self.z.lt(&rhs.z),
@@ -387,8 +391,8 @@ impl Vec4 {
     ///
     /// In other words, this computes `[x.is_nan(), y.is_nan(), z.is_nan(), w.is_nan()]`.
     #[inline]
-    pub fn is_nan_mask(self) -> BVec4 {
-        BVec4::new(
+    pub fn is_nan_mask(self) -> BVec4A {
+        BVec4A::new(
             self.x.is_nan(),
             self.y.is_nan(),
             self.z.is_nan(),
@@ -753,6 +757,18 @@ impl Vec4 {
     #[inline]
     pub fn as_dvec4(&self) -> crate::DVec4 {
         crate::DVec4::new(self.x as f64, self.y as f64, self.z as f64, self.w as f64)
+    }
+
+    /// Casts all elements of `self` to `i16`.
+    #[inline]
+    pub fn as_i16vec4(&self) -> crate::I16Vec4 {
+        crate::I16Vec4::new(self.x as i16, self.y as i16, self.z as i16, self.w as i16)
+    }
+
+    /// Casts all elements of `self` to `u16`.
+    #[inline]
+    pub fn as_u16vec4(&self) -> crate::U16Vec4 {
+        crate::U16Vec4::new(self.x as u16, self.y as u16, self.z as u16, self.w as u16)
     }
 
     /// Casts all elements of `self` to `i32`.
