@@ -1255,6 +1255,8 @@ impl {{ self_t }} {
     /// # Panics
     /// This function will panic if any `rhs` element is 0 or the division results in overflow.
     {%- endif %}
+    ///
+    /// [Euclidean division]: {{scalar_t}}::div_euclid
     #[inline]
     #[must_use]
     pub fn div_euclid(self, rhs: Self) -> Self {
